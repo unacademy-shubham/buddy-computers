@@ -1,2 +1,3 @@
 User-agent: *
 Allow: /
+Sitemap: https://buddycomputers.vercel.app/sitemap.xml
