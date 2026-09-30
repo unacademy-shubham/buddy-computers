@@ -40,4 +40,42 @@
   const fmtDate=v=>{try{const dt=v?.toDate?v.toDate():v?.seconds?new Date(v.seconds*1000):null;return dt?new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'short',year:'numeric'}).format(dt):''}catch{return ''}};
   const reviewHTML=r=>{const initial=esc((r.name||'?').trim().charAt(0).toUpperCase()),rating=Math.max(1,Math.min(5,Number(r.rating)||5));return `<article class="review-card reveal in"><div class="review-top"><div class="review-person"><div class="review-avatar">${initial}</div><div><strong>${esc(r.name)}</strong><small>${esc(r.service||'Customer')}</small></div></div><div class="stars" aria-label="${rating} out of 5 stars">${'★'.repeat(rating)}${'☆'.repeat(5-rating)}</div></div><blockquote>“${esc(r.message)}”</blockquote><time>${esc(fmtDate(r.createdAt))}</time></article>`};
   $$('[data-approved-reviews]').forEach(async box=>{const limit=Number(box.dataset.limit)||999;box.classList.add('loading');try{const fb=await firebase();if(!fb.firebaseConfigured)return;const rs=(await fb.getApprovedReviews()).slice(0,limit);if(rs.length)box.innerHTML=rs.map(reviewHTML).join('')}catch(err){console.warn('Reviews unavailable',err)}finally{box.classList.remove('loading')}});
+
+  // Floating WhatsApp Drag Logic
+  const waBtn = document.querySelector('.floating-whatsapp');
+  if (waBtn) {
+    let isDragging = false, isMoved = false;
+    let startX, startY, initX, initY;
+    waBtn.addEventListener('pointerdown', e => {
+      isDragging = true; isMoved = false;
+      startX = e.clientX; startY = e.clientY;
+      const rect = waBtn.getBoundingClientRect();
+      initX = rect.left; initY = rect.top;
+      waBtn.style.transition = 'none';
+      waBtn.style.right = 'auto';
+      waBtn.style.bottom = 'auto';
+      waBtn.setPointerCapture(e.pointerId);
+    });
+    waBtn.addEventListener('pointermove', e => {
+      if(!isDragging) return;
+      let dx = e.clientX - startX;
+      let dy = e.clientY - startY;
+      if(Math.abs(dx) > 5 || Math.abs(dy) > 5) isMoved = true;
+      if(isMoved){
+        let newX = Math.max(0, Math.min(window.innerWidth - waBtn.offsetWidth, initX + dx));
+        let newY = Math.max(0, Math.min(window.innerHeight - waBtn.offsetHeight, initY + dy));
+        waBtn.style.left = `${newX}px`;
+        waBtn.style.top = `${newY}px`;
+      }
+    });
+    waBtn.addEventListener('pointerup', e => {
+      isDragging = false;
+      waBtn.style.transition = 'transform 0.3s';
+      waBtn.releasePointerCapture(e.pointerId);
+    });
+    waBtn.addEventListener('click', e => {
+      if(isMoved) { e.preventDefault(); e.stopImmediatePropagation(); }
+    });
+  }
+
 })();
