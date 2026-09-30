@@ -1,17 +1,13 @@
 (()=>{
   document.documentElement.classList.add('motion-ready');
-  const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+  const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
   const esc=(v='')=>String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const header=$('[data-header]'); let lastScroll=0;
   const onScroll=()=>{const y=scrollY||0;header?.classList.toggle('scrolled',y>8);if(header&&!reduceMotion){header.classList.toggle('nav-hidden',y>lastScroll&&y>140);header.classList.toggle('nav-visible',y<lastScroll||y<90)}lastScroll=y};
   onScroll();addEventListener('scroll',onScroll,{passive:true});
-  const menuBtn=$('[data-menu-toggle]'),mobileMenu=$('[data-mobile-menu]');
-  menuBtn?.addEventListener('click',()=>{const open=menuBtn.getAttribute('aria-expanded')!=='true';menuBtn.setAttribute('aria-expanded',String(open));mobileMenu?.classList.toggle('open',open)});
-  $$('[data-mobile-menu] a').forEach(a=>a.addEventListener('click',()=>{menuBtn?.setAttribute('aria-expanded','false');mobileMenu?.classList.remove('open')}));
-  const themeBtn=$('[data-theme-toggle]');themeBtn?.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;try{localStorage.setItem('buddy-theme',next)}catch(e){}});
-
-  const revealEls=$$('.reveal');
+  const menuBtn=$('[data-menu-toggle]'),mobileMenu=$('[data-mobile-menu]');   menuBtn?.addEventListener('click',()=>{const open=menuBtn.getAttribute('aria-expanded')!=='true';menuBtn.setAttribute('aria-expanded',String(open));mobileMenu?.classList.toggle('open',open)});   $$('[data-mobile-menu] a').forEach(a=>a.addEventListener('click',()=>{menuBtn?.setAttribute('aria-expanded','false');mobileMenu?.classList.remove('open')}));
+  const themeBtn=$('[data-theme-toggle]');themeBtn?.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;try{localStorage.setItem('buddy-theme',next)}catch(e){}});    const revealEls=$$('.reveal');
   if(!reduceMotion){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12,rootMargin:'0px 0px -6%'});revealEls.forEach(el=>io.observe(el))}else revealEls.forEach(el=>el.classList.add('in'));
 
   const hero=$('[data-cinematic-hero]'),heroMedia=$('[data-hero-media]'),progress=$('[data-hero-progress]');let ticking=false;
@@ -26,8 +22,7 @@
   const openDialog=d=>{if(!d)return;if(typeof d.showModal==='function')d.showModal();else d.setAttribute('open','');document.body.classList.add('modal-open')};
   const closeDialog=d=>{try{d?.close()}catch{}document.body.classList.remove('modal-open')};
   $$('[data-whatsapp-open]').forEach(b=>b.addEventListener('click',()=>{modalMessage='Hi, I need help from Buddy Computers.';setWaLinks(modalMessage);openDialog(contactModal)}));
-  $('[data-modal-close]')?.addEventListener('click',()=>closeDialog(contactModal));contactModal?.addEventListener('click',e=>{if(e.target===contactModal)closeDialog(contactModal)});
-  $$('[data-enquiry-open]').forEach(b=>b.addEventListener('click',()=>{openDialog(enquiryModal);const service=b.dataset.service;if(service){const sel=$('select[name="service"]',enquiryModal);if(sel)sel.value=service}}));
+  $('[data-modal-close]')?.addEventListener('click',()=>closeDialog(contactModal));contactModal?.addEventListener('click',e=>{if(e.target===contactModal)closeDialog(contactModal)});$$('[data-enquiry-open]').forEach(b=>b.addEventListener('click',()=>{openDialog(enquiryModal);const service=b.dataset.service;if(service){const sel=$('select[name="service"]',enquiryModal);if(sel)sel.value=service}}));
   $('[data-enquiry-close]')?.addEventListener('click',()=>closeDialog(enquiryModal));enquiryModal?.addEventListener('click',e=>{if(e.target===enquiryModal)closeDialog(enquiryModal)});addEventListener('keydown',e=>{if(e.key==='Escape'){closeDialog(contactModal);closeDialog(enquiryModal)}});
 
   async function firebase(){return import('/assets/firebase-public.js')};
@@ -35,47 +30,8 @@
   const setStatus=(form,msg,type='')=>{const el=$('.form-status',form);if(el){el.textContent=msg;el.className=`form-status ${type}`.trim()}};
   const cleanPhone=v=>String(v||'').replace(/[^0-9+]/g,'').slice(0,20);
   const fallbackWhatsApp=data=>{modalMessage=`Hi, I need help from Buddy Computers.\n\nName: ${data.name||''}\nPhone: ${data.phone||''}\nService: ${data.service||'Not sure'}\nDetails: ${data.message||''}`;setWaLinks(modalMessage);openDialog(contactModal)};
-  $$('[data-enquiry-form]').forEach(form=>form.addEventListener('submit',async e=>{e.preventDefault();if(form.website?.value)return;const btn=$('button[type="submit"]',form),d=formData(form);d.phone=cleanPhone(d.phone);d.context=form.dataset.context||'website';d.page=location.pathname;d.preference=d.preference||'WhatsApp';d.email=d.email||'';if(d.phone.replace(/\D/g,'').length<10){setStatus(form,'Please enter a valid mobile number.','error');return}btn.disabled=true;setStatus(form,'Sending your enquiry…');try{const fb=await firebase();if(!fb.firebaseConfigured){setStatus(form,'Firebase setup is pending. Choose a WhatsApp contact to send this enquiry.','error');fallbackWhatsApp(d);return}await fb.submitEnquiry({name:String(d.name).trim(),phone:d.phone,email:String(d.email).trim(),service:d.service,preference:d.preference,message:String(d.message).trim(),context:d.context,page:d.page});form.reset();setStatus(form,'Thanks — your enquiry has been received. We’ll contact you soon.','success');setTimeout(()=>{if(form.closest('dialog')?.open)closeDialog(form.closest('dialog'))},1600)}catch(err){console.error(err);setStatus(form,'We could not save the enquiry right now. Please use WhatsApp or call us.','error');fallbackWhatsApp(d)}finally{btn.disabled=false}}));
-  $$('[data-review-form]').forEach(form=>form.addEventListener('submit',async e=>{e.preventDefault();if(form.website?.value)return;const btn=$('button[type="submit"]',form),d=formData(form);btn.disabled=true;setStatus(form,'Submitting your review…');try{const fb=await firebase();if(!fb.firebaseConfigured){setStatus(form,'Review submission will be available after Firebase is connected.','error');return}await fb.submitReview({name:String(d.name).trim(),service:d.service,rating:Number(d.rating),message:String(d.message).trim(),page:location.pathname});form.reset();setStatus(form,'Thank you. Your review is pending approval and will appear after moderation.','success')}catch(err){console.error(err);setStatus(form,'We could not submit the review right now. Please try again later.','error')}finally{btn.disabled=false}}));
+  $$('[data-enquiry-form]').forEach(form=>form.addEventListener('submit',async e=>{e.preventDefault();if(form.website?.value)return;const btn=$('button[type="submit"]',form),d=formData(form);d.phone=cleanPhone(d.phone);d.context=form.dataset.context\vert{}\vert{}'website';d.page=location.pathname;d.preference=d.preference\vert{}\vert{}'WhatsApp';d.email=d.email\vert{}\vert{}'';if(d.phone.replace(/\D/g,'').length<10){setStatus(form,'Please enter a valid mobile number.','error');return}btn.disabled=true;setStatus(form,'Sending your enquiry…');try{const fb=await firebase();if(!fb.firebaseConfigured){setStatus(form,'Firebase setup is pending. Choose a WhatsApp contact to send this enquiry.','error');fallbackWhatsApp(d);return}await fb.submitEnquiry({name:String(d.name).trim(),phone:d.phone,email:String(d.email).trim(),service:d.service,preference:d.preference,message:String(d.message).trim(),context:d.context,page:d.page});form.reset();setStatus(form,'Thanks — your enquiry has been received. We’ll contact you soon.','success');setTimeout(()=>{if(form.closest('dialog')?.open)closeDialog(form.closest('dialog'))},1600)}catch(err){console.error(err);setStatus(form,'We could not save the enquiry right now. Please use WhatsApp or call us.','error');fallbackWhatsApp(d)}finally{btn.disabled=false}}));   $$('[data-review-form]').forEach(form=>form.addEventListener('submit',async e=>{e.preventDefault();if(form.website?.value)return;const btn=$('button[type="submit"]',form),d=formData(form);btn.disabled=true;setStatus(form,'Submitting your review…');try{const fb=await firebase();if(!fb.firebaseConfigured){setStatus(form,'Review submission will be available after Firebase is connected.','error');return}await fb.submitReview({name:String(d.name).trim(),service:d.service,rating:Number(d.rating),message:String(d.message).trim(),page:location.pathname});form.reset();setStatus(form,'Thank you. Your review is pending approval and will appear after moderation.','success')}catch(err){console.error(err);setStatus(form,'We could not submit the review right now. Please try again later.','error')}finally{btn.disabled=false}}));
   const fmtDate=v=>{try{const dt=v?.toDate?v.toDate():v?.seconds?new Date(v.seconds*1000):null;return dt?new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'short',year:'numeric'}).format(dt):''}catch{return ''}};
   const reviewHTML=r=>{const initial=esc((r.name||'?').trim().charAt(0).toUpperCase()),rating=Math.max(1,Math.min(5,Number(r.rating)||5));return `<article class="review-card reveal in"><div class="review-top"><div class="review-person"><div class="review-avatar">${initial}</div><div><strong>${esc(r.name)}</strong><small>${esc(r.service||'Customer')}</small></div></div><div class="stars" aria-label="${rating} out of 5 stars">${'★'.repeat(rating)}${'☆'.repeat(5-rating)}</div></div><blockquote>“${esc(r.message)}”</blockquote><time>${esc(fmtDate(r.createdAt))}</time></article>`};
   $$('[data-approved-reviews]').forEach(async box=>{const limit=Number(box.dataset.limit)||999;box.classList.add('loading');try{const fb=await firebase();if(!fb.firebaseConfigured)return;const rs=(await fb.getApprovedReviews()).slice(0,limit);if(rs.length)box.innerHTML=rs.map(reviewHTML).join('')}catch(err){console.warn('Reviews unavailable',err)}finally{box.classList.remove('loading')}});
-
-  // Floating WhatsApp Drag Logic
-  const waBtn = document.querySelector('.floating-whatsapp');
-  if (waBtn) {
-    let isDragging = false, isMoved = false;
-    let startX, startY, initX, initY;
-    waBtn.addEventListener('pointerdown', e => {
-      isDragging = true; isMoved = false;
-      startX = e.clientX; startY = e.clientY;
-      const rect = waBtn.getBoundingClientRect();
-      initX = rect.left; initY = rect.top;
-      waBtn.style.transition = 'none';
-      waBtn.style.right = 'auto';
-      waBtn.style.bottom = 'auto';
-      waBtn.setPointerCapture(e.pointerId);
-    });
-    waBtn.addEventListener('pointermove', e => {
-      if(!isDragging) return;
-      let dx = e.clientX - startX;
-      let dy = e.clientY - startY;
-      if(Math.abs(dx) > 5 || Math.abs(dy) > 5) isMoved = true;
-      if(isMoved){
-        let newX = Math.max(0, Math.min(window.innerWidth - waBtn.offsetWidth, initX + dx));
-        let newY = Math.max(0, Math.min(window.innerHeight - waBtn.offsetHeight, initY + dy));
-        waBtn.style.left = `${newX}px`;
-        waBtn.style.top = `${newY}px`;
-      }
-    });
-    waBtn.addEventListener('pointerup', e => {
-      isDragging = false;
-      waBtn.style.transition = 'transform 0.3s';
-      waBtn.releasePointerCapture(e.pointerId);
-    });
-    waBtn.addEventListener('click', e => {
-      if(isMoved) { e.preventDefault(); e.stopImmediatePropagation(); }
-    });
-  }
-
 })();
