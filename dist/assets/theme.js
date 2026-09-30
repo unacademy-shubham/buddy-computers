@@ -1,0 +1,1 @@
+(()=>{try{const saved=localStorage.getItem('buddy-theme');const prefers=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=saved||prefers}catch(e){document.documentElement.dataset.theme='light'}})();
