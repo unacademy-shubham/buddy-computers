@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email == 'buddycomputersofficial@gmail.com';
+    }
+
+    match /enquiries/{id} {
+      allow create: if request.auth == null
+        && request.resource.data.keys().hasOnly(['name','phone','email','service','preference','message','context','page','status','createdAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 80
+        && request.resource.data.phone is string && request.resource.data.phone.size() >= 10 && request.resource.data.phone.size() <= 20
+        && request.resource.data.email is string && request.resource.data.email.size() <= 120
+        && request.resource.data.service is string && request.resource.data.service.size() >= 2 && request.resource.data.service.size() <= 120
+        && request.resource.data.preference is string && request.resource.data.preference.size() <= 40
+        && request.resource.data.message is string && request.resource.data.message.size() >= 5 && request.resource.data.message.size() <= 1600
+        && request.resource.data.context is string && request.resource.data.context.size() <= 80
+        && request.resource.data.page is string && request.resource.data.page.size() <= 120
+        && request.resource.data.status == 'new'
+        && request.resource.data.createdAt == request.time;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /reviews/{id} {
+      allow create: if request.auth == null
+        && request.resource.data.keys().hasOnly(['name','service','rating','message','page','status','createdAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 80
+        && request.resource.data.service is string && request.resource.data.service.size() >= 2 && request.resource.data.service.size() <= 120
+        && request.resource.data.rating is int && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && request.resource.data.message is string && request.resource.data.message.size() >= 5 && request.resource.data.message.size() <= 1000
+        && request.resource.data.page is string && request.resource.data.page.size() <= 120
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time;
+      allow read: if isAdmin() || resource.data.status == 'approved';
+      allow update, delete: if isAdmin();
+    }
+  }
+}
